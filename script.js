@@ -142,7 +142,7 @@ template.innerHTML = `
 
 class SupervisorControls extends HTMLElement {
   static get observedAttributes() {
-    return ["access-token", "org-id", "user-id", "user", "pass-phrase", "trigger-url"];
+    return ["access-token", "org-id", "user-id", "user"];
   }
 
   constructor() {
@@ -163,26 +163,22 @@ class SupervisorControls extends HTMLElement {
     this.shadowRoot.appendChild(style.cloneNode(true));
     this.shadowRoot.appendChild(template.content.cloneNode(true));
 
-    // Support STORE values: access-token ($STORE.auth.accessToken), org-id ($STORE.agent.orgId), user-id ($STORE.agent.agentId)
+    // Token and org from Desktop layout STORE: access-token ($STORE.auth.accessToken), org-id ($STORE.agent.orgId)
     const token = this._getAttr("access-token", "accessToken");
     const org = this._getAttr("org-id", "orgId");
     const username = this._getAttr("user-id", "userId") || this._getAttr("user", "User") || null;
-    const passphrase = this._getAttr("pass-phrase", "passPhrase");
-    const triggerurl = this._getAttr("trigger-url", "triggerURL");
 
+    if (!token) {
+      this._showError("Missing access-token. Set accessToken: $STORE.auth.accessToken in the Desktop layout properties.");
+      return;
+    }
     if (!org) {
-      this._showError("Missing required attribute: org-id (use $STORE.agent.orgId in layout)");
+      this._showError("Missing org-id. Set orgId: $STORE.agent.orgId in the Desktop layout properties.");
       return;
     }
 
-    // Use token from STORE if provided; otherwise fetch from token service
-    const tokenPromise = token
-      ? Promise.resolve(token)
-      : (triggerurl ? this._fetchAccessToken(triggerurl, passphrase) : Promise.reject(new Error("Provide access-token ($STORE.auth.accessToken) or trigger-url for token service")));
-
     this._showLoading();
-    tokenPromise
-      .then((t) => this._fetchGlobalVariables(org, username, t))
+    this._fetchGlobalVariables(org, username, token)
       .then((result) => this._render(result))
       .catch((err) => {
         console.error("[SupervisorControls] ERROR:", err);
@@ -225,17 +221,6 @@ class SupervisorControls extends HTMLElement {
     } catch (e) {
       throw new Error(`${context}: Invalid JSON. ${e.message}`);
     }
-  }
-
-  async _fetchAccessToken(triggerurl, passphrase) {
-    const res = await fetch(triggerurl, {
-      method: "GET",
-      headers: { "x-token-passphrase": passphrase },
-      redirect: "follow",
-    });
-    const data = await this._safeJson(res, "Token service");
-    if (data.token) return data.token;
-    throw new Error(data.error || "Failed to get access token");
   }
 
   async _fetchGlobalVariables(org, username, token) {

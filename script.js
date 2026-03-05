@@ -210,13 +210,30 @@ class SupervisorControls extends HTMLElement {
     this.shadowRoot.getElementById("content").style.display = "block";
   }
 
+  async _safeJson(res, context = "") {
+    const text = await res.text();
+    if (!text || !text.trim()) {
+      throw new Error(`${context}: Empty response (${res.status})`);
+    }
+    const first = text.trim()[0];
+    if (first !== "{" && first !== "[") {
+      const preview = text.slice(0, 80).replace(/\s+/g, " ");
+      throw new Error(`${context}: Expected JSON but got ${res.status}. Response: ${preview}…`);
+    }
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      throw new Error(`${context}: Invalid JSON. ${e.message}`);
+    }
+  }
+
   async _fetchAccessToken(triggerurl, passphrase) {
     const res = await fetch(triggerurl, {
       method: "GET",
       headers: { "x-token-passphrase": passphrase },
       redirect: "follow",
     });
-    const data = await res.json();
+    const data = await this._safeJson(res, "Token service");
     if (data.token) return data.token;
     throw new Error(data.error || "Failed to get access token");
   }
@@ -232,7 +249,7 @@ class SupervisorControls extends HTMLElement {
       },
       redirect: "follow",
     });
-    const result = await res.json();
+    const result = await this._safeJson(res, "WxCC API");
     if (result.error) throw new Error(result.error.message?.[0]?.description || "API error");
     return { token, result };
   }
@@ -425,7 +442,7 @@ class SupervisorControls extends HTMLElement {
       body: JSON.stringify(payload),
       redirect: "follow",
     })
-      .then((r) => r.json())
+      .then((r) => this._safeJson(r, "Update"))
       .then((result) => this._showUpdateResult(result))
       .catch((err) => {
         console.error("[SupervisorControls] Update failed:", err);

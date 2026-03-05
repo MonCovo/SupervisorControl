@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Supervisor Controls | Voice Flow Changes</title>
+  <!-- Momentum Design - Cisco design system -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@momentum-ui/core@19.16.1/css/momentum-ui.min.css" />
+  <style>
+    /* Page wrapper for GitHub Pages / Desktop embed */
+    body {
+      margin: 0;
+      font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      background: #f7f7f7;
+      color: #333;
+    }
+    .supervisor-page {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    .supervisor-page h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #333;
+      margin: 0 0 24px 0;
+    }
+    supervisor-controls {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="supervisor-page">
+    <h1>Supervisor Controls</h1>
+    <!-- Configure via attributes or URL params when embedding in WxCC Desktop -->
+    <supervisor-controls
+      org-id="YOUR_ORG_ID"
+      user="YOUR_USER_PREFIX"
+      pass-phrase="YOUR_PASSPHRASE"
+      trigger-url="YOUR_TOKEN_TRIGGER_URL">
+    </supervisor-controls>
+  </div>
+
+  <script src="app/script.js"></script>
+</body>
+</html>
